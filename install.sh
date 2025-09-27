@@ -1,10 +1,30 @@
 #!/bin/bash
-# Install script - complete USB audio gadget setup
+# Raspberry Pi Zero USB Audio Device Installation Script
+# 
+# This script configures a Raspberry Pi Zero W as a USB Audio Class 2 device
+# with automatic routing to connected audio hardware.
+#
+# Copyright (C) 2024 Raspberry Pi Zero USB Audio Device Project Contributors
+# Licensed under GPL v3 - see LICENSE file for details
 
 set -e
 
-echo "=== USB Audio Gadget Installation ==="
+echo "=== Raspberry Pi Zero USB Audio Device Setup ==="
+echo "Copyright (C) 2024 - Licensed under GPL v3"
 echo
+
+# Check if running on Raspberry Pi
+if ! grep -q "Raspberry Pi" /proc/cpuinfo 2>/dev/null; then
+    echo "❌ This script must be run on a Raspberry Pi"
+    exit 1
+fi
+
+# Check for Pi Zero (recommended)
+if grep -q "Pi Zero" /proc/cpuinfo 2>/dev/null; then
+    echo "✅ Detected Raspberry Pi Zero - optimal hardware"
+else
+    echo "⚠️  Not running on Pi Zero - ensure OTG USB support is available"
+fi
 
 # Update /boot/config.txt
 echo "Configuring /boot/config.txt..."
@@ -29,7 +49,8 @@ echo "✓ Updated kernel modules"
 echo "Installing USB gadget script..."
 sudo tee /usr/local/bin/usb-gadget-audio.sh > /dev/null << 'EOF'
 #!/bin/bash
-# USB Audio Gadget Configuration
+# USB Audio Gadget Configuration Script
+# Creates a USB Audio Class 2 composite device
 
 GADGET_DIR="/sys/kernel/config/usb_gadget/pi_audio"
 VENDOR_ID="0x1d6b"
@@ -78,8 +99,8 @@ echo "$PRODUCT" > strings/0x409/product
 # Create UAC2 function
 mkdir -p functions/uac2.usb0
 cd functions/uac2.usb0
-echo 3 > c_chmask
-echo 3 > p_chmask
+echo 3 > c_chmask  # Stereo (left + right channels)
+echo 3 > p_chmask  # Stereo (left + right channels)
 echo 48000 > c_srate
 echo 48000 > p_srate
 echo 2 > c_ssize
@@ -98,7 +119,7 @@ ln -s functions/uac2.usb0 configs/c.1/
 UDC=$(ls /sys/class/udc | head -1)
 echo "$UDC" > UDC
 
-echo "USB Audio Gadget configured"
+echo "USB Audio Gadget configured successfully"
 EOF
 
 sudo chmod +x /usr/local/bin/usb-gadget-audio.sh
@@ -127,7 +148,7 @@ EOF
 echo "Creating audio routing systemd service..."
 sudo tee /etc/systemd/system/usb-audio-routing.service > /dev/null << 'EOF'
 [Unit]
-Description=USB to Merus Amp Audio Routing
+Description=USB to Audio Hardware Routing
 After=usb-gadget-audio.service sound.target
 Requires=usb-gadget-audio.service
 StartLimitIntervalSec=60
@@ -212,7 +233,7 @@ echo "5. Check audio devices with: aplay -l"
 echo "6. Debug issues with: ./debug.sh"
 echo
 echo "AUDIO ROUTING:"
-echo "• USB audio from host will automatically route to your audio output (Merus amp)"
+echo "• USB audio from host will automatically route to your audio output"
 echo "• No additional configuration needed - routing starts automatically"
 echo "• Test from host: play audio to 'Pi Zero USB Audio' device"
 echo

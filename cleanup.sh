@@ -1,5 +1,8 @@
 #!/bin/bash
-# Cleanup script - removes all USB gadget configuration
+# Cleanup script - removes all USB audio gadget configuration
+#
+# Copyright (C) 2024 Raspberry Pi Zero USB Audio Device Project Contributors
+# Licensed under GPL v3 - see LICENSE file for details
 
 echo "=== USB Audio Gadget Cleanup ==="
 
