@@ -345,15 +345,6 @@ if [ $RELOAD_RESULT -eq 0 ]; then
     echo "🎉 Configuration reload completed successfully!"
     echo "   Your audio processing changes are now active."
     echo "   Test with audio playback to verify the new settings."
-else
-    echo "❌ Configuration reload failed (exit code: $RELOAD_RESULT)"
-    echo "   Check the error messages above for troubleshooting."
-    echo "   You can also try: sudo systemctl restart camilladsp"
-fi
-
-echo
-if [ $RELOAD_RESULT -eq 0 ]; then
-    echo "🎉 Configuration reload completed successfully!"
     echo
     echo "Monitor the service:"
     echo "• Check status: systemctl status $SERVICE_NAME"
