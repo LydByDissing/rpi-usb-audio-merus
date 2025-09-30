@@ -151,13 +151,47 @@ The default configuration provides simple passthrough processing. You can custom
 - **Service logs:** `sudo journalctl -u camilladsp -f`
 
 ### Configuration Management
+
+**Easy Workflow:**
+1. **Edit:** Modify `./camilladsp.yml` in the project directory
+2. **Apply:** Run `./reload-config.sh` to copy changes and reload
+3. **Test:** Audio processing updates immediately
+
+**Available Tools:**
+- **Live reload:** `./reload-config.sh` (copies local config + SIGHUP reload)
+- **Auto-reload:** `./watch-config.sh` (monitors `./camilladsp.yml` for changes)
 - **Validate config:** `/usr/local/bin/camilladsp -c /usr/local/etc/camilladsp.yml`
-- **Reload config:** `./reload-config.sh` (defaults to SIGHUP signal method)
-- **Auto-reload:** `./watch-config.sh` (monitors file changes)
+- **Test workflow:** `./test-reload.sh` (shows current config status)
 - **Manual methods:** Service restart or websocket API
 
+**File Locations:**
+- **Edit here:** `./camilladsp.yml` (local working copy)
+- **Service reads:** `/usr/local/etc/camilladsp.yml` (system location)
+
 ### Customization
-Edit the configuration file to add filters, adjust gain, or implement crossovers. CamillaDSP supports extensive audio processing capabilities. After editing, use `./reload-config.sh` to apply changes without restarting the service. See the [CamillaDSP documentation](https://github.com/HEnquist/camilladsp) for detailed configuration options.
+
+**Quick Start:**
+```bash
+# Edit your audio processing settings
+nano camilladsp.yml
+
+# Apply changes instantly
+./reload-config.sh
+
+# Or watch for changes automatically
+./watch-config.sh
+```
+
+**Configuration Options:**
+CamillaDSP supports extensive audio processing capabilities:
+- **Equalization:** Biquad filters, parametric EQ, graphic EQ
+- **Crossover filters:** For multi-way speaker systems
+- **Room correction:** FIR/IIR filters from measurement data
+- **Dynamic processing:** Compressors, limiters, AGC
+- **Delay compensation:** Per-channel delays for time alignment
+- **Convolution:** Impulse response processing for room correction
+
+See the [CamillaDSP documentation](https://github.com/HEnquist/camilladsp) for detailed configuration options and examples.
 
 ## 📖 Documentation
 
