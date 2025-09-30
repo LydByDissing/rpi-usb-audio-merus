@@ -12,11 +12,42 @@ echo "Copyright (C) 2024 - Licensed under GPL v3"
 echo
 
 CONFIG_FILE="/usr/local/etc/camilladsp.yml"
+LOCAL_CONFIG_FILE="./camilladsp.yml"
 SERVICE_NAME="camilladsp.service"
+
+# Copy local config to system location if it exists
+copy_config_if_needed() {
+    if [ -f "$LOCAL_CONFIG_FILE" ]; then
+        echo "🔄 Copying local configuration to system location..."
+        
+        # Always copy to ensure latest changes are used
+        sudo cp "$LOCAL_CONFIG_FILE" "$CONFIG_FILE"
+        if [ $? -eq 0 ]; then
+            echo "✓ Configuration updated: $LOCAL_CONFIG_FILE → $CONFIG_FILE"
+            return 0
+        else
+            echo "❌ Failed to copy configuration file"
+            return 1
+        fi
+    else
+        echo "ℹ️  No local config file found, using existing system config"
+    fi
+    return 0
+}
+
+# Always copy config first before any operations
+echo "🔍 Preparing configuration..."
+copy_config_if_needed
+if [ $? -ne 0 ]; then
+    exit 1
+fi
 
 # Check if config file exists
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "❌ Configuration file not found: $CONFIG_FILE"
+    echo "   Make sure you have either:"
+    echo "   - Local config: $LOCAL_CONFIG_FILE"
+    echo "   - System config: $CONFIG_FILE"
     exit 1
 fi
 

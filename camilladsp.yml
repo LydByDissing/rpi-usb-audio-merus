@@ -33,6 +33,10 @@ devices:
 
 # Example filter: Bass shelf (customize frequency, gain, and Q for your needs)
 filters:
+  lower_gain_to_allow_bass_boost:
+    type: Gain
+    parameters:
+      gain: -24.0
   bass_shelf_120hz:
     type: Biquad
     parameters:
