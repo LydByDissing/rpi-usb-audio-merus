@@ -1,0 +1,40 @@
+[Unit]
+Description=CamillaDSP Audio Processor for USB Audio Device
+Documentation=https://github.com/HEnquist/camilladsp
+After=network.target sound.target usb-gadget-audio.service
+Wants=sound.target
+Requires=usb-gadget-audio.service
+
+[Service]
+Type=simple
+User=pi
+Group=audio
+ExecStartPre=/bin/sleep 5
+ExecStart=/usr/local/bin/camilladsp -p 1234 /usr/local/etc/camilladsp.yml
+WorkingDirectory=/usr/local/etc
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Environment for ALSA access
+Environment="HOME=/home/pi"
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
+Environment="ALSA_CONF_PATH=/usr/share/alsa/alsa.conf"
+
+# Security settings (relaxed for Pi compatibility and ALSA access)
+NoNewPrivileges=yes
+ProtectSystem=no
+ProtectHome=no
+PrivateTmp=no
+PrivateDevices=no
+
+# Resource limits optimized for Pi Zero
+MemoryMax=64M
+CPUQuota=50%
+
+# Audio device access
+SupplementaryGroups=audio
+
+[Install]
+WantedBy=multi-user.target

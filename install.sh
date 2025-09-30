@@ -13,6 +13,33 @@ echo "=== Raspberry Pi Zero USB Audio Device Setup ==="
 echo "Copyright (C) 2024 - Licensed under GPL v3"
 echo
 
+# Check for command line options
+FORCE_DOWNLOAD=false
+for arg in "$@"; do
+    case $arg in
+        --force-download)
+            FORCE_DOWNLOAD=true
+            echo "ℹ️  Force download mode enabled - will re-download CamillaDSP even if correct version exists"
+            ;;
+        --help|-h)
+            echo "Usage: $0 [options]"
+            echo "Options:"
+            echo "  --force-download    Force re-download of CamillaDSP binary"
+            echo "  --help, -h          Show this help message"
+            echo
+            echo "Environment Variables:"
+            echo "  CAMILLADSP_VERSION  Override CamillaDSP version (default: v3.0.1)"
+            echo
+            echo "Examples:"
+            echo "  $0                                    # Normal installation"
+            echo "  $0 --force-download                   # Force re-download"
+            echo "  CAMILLADSP_VERSION=v3.0.0 $0         # Install specific version"
+            exit 0
+            ;;
+    esac
+done
+echo
+
 # Check if running on Raspberry Pi
 if ! grep -q "Raspberry Pi" /proc/cpuinfo 2>/dev/null; then
     echo "❌ This script must be run on a Raspberry Pi"
@@ -144,26 +171,161 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 EOF
 
-# Create audio routing systemd service
-echo "Creating audio routing systemd service..."
-sudo tee /etc/systemd/system/usb-audio-routing.service > /dev/null << 'EOF'
+# Install CamillaDSP binary and configuration
+echo "Installing CamillaDSP..."
+
+# Download and install CamillaDSP binary
+CAMILLADSP_VERSION="${CAMILLADSP_VERSION:-v3.0.1}"  # Can be overridden with env var
+CAMILLADSP_ARCH="armv6"  # Compatible with all Pi models including Pi Zero
+CAMILLADSP_URL="https://github.com/HEnquist/camilladsp/releases/download/${CAMILLADSP_VERSION}/camilladsp-linux-${CAMILLADSP_ARCH}.tar.gz"
+
+# Check if CamillaDSP is already installed and up to date
+NEEDS_DOWNLOAD=false
+
+if [ -x "/usr/local/bin/camilladsp" ]; then
+    echo "Checking existing CamillaDSP installation..."
+    CURRENT_VERSION=$(/usr/local/bin/camilladsp --version 2>/dev/null | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' || echo "unknown")
+    if [ "$CURRENT_VERSION" = "unknown" ]; then
+        echo "⚠️  Could not determine current CamillaDSP version"
+        NEEDS_DOWNLOAD=true
+    else
+    
+    if [ "$CURRENT_VERSION" = "$CAMILLADSP_VERSION" ] && [ "$FORCE_DOWNLOAD" = "false" ]; then
+        echo "✓ CamillaDSP $CURRENT_VERSION is already installed and up to date"
+        NEEDS_DOWNLOAD=false
+    else
+        if [ "$FORCE_DOWNLOAD" = "true" ]; then
+            echo "ℹ️  Force download requested - will re-download CamillaDSP $CAMILLADSP_VERSION"
+        else
+            echo "ℹ️  CamillaDSP version mismatch: installed=$CURRENT_VERSION, wanted=$CAMILLADSP_VERSION"
+        fi
+        NEEDS_DOWNLOAD=true
+    fi
+fi
+else
+    echo "CamillaDSP binary not found at /usr/local/bin/camilladsp"
+    NEEDS_DOWNLOAD=true
+fi
+
+if [ "$NEEDS_DOWNLOAD" = "true" ]; then
+    echo "Downloading CamillaDSP ${CAMILLADSP_VERSION} for ${CAMILLADSP_ARCH}..."
+if command -v wget >/dev/null 2>&1; then
+    wget -q --show-progress "$CAMILLADSP_URL" -O /tmp/camilladsp.tar.gz
+elif command -v curl >/dev/null 2>&1; then
+    curl -L "$CAMILLADSP_URL" -o /tmp/camilladsp.tar.gz
+else
+    echo "❌ Neither wget nor curl found. Please install one of them:"
+    echo "   sudo apt update && sudo apt install wget"
+    exit 1
+fi
+
+if [ $? -eq 0 ]; then
+    echo "✓ CamillaDSP downloaded successfully"
+    
+    # Basic file size check (armv6 release should be around 2.4MB)
+    FILE_SIZE=$(stat -f%z /tmp/camilladsp.tar.gz 2>/dev/null || stat -c%s /tmp/camilladsp.tar.gz 2>/dev/null)
+    if [ "$FILE_SIZE" -lt 1000000 ]; then
+        echo "⚠️  Warning: Downloaded file seems too small (${FILE_SIZE} bytes)"
+        echo "   This might indicate a download error"
+    else
+        echo "✓ File size looks reasonable (${FILE_SIZE} bytes)"
+    fi
+else
+    echo "❌ Failed to download CamillaDSP"
+    exit 1
+fi
+
+# Extract and install binary
+echo "Extracting CamillaDSP binary..."
+cd /tmp
+tar -xzf camilladsp.tar.gz
+if [ -f "camilladsp" ]; then
+    sudo mv camilladsp /usr/local/bin/
+    sudo chmod +x /usr/local/bin/camilladsp
+    sudo chown root:root /usr/local/bin/camilladsp
+    echo "✓ CamillaDSP binary installed to /usr/local/bin/camilladsp"
+    
+    # Verify installation
+    /usr/local/bin/camilladsp --version
+else
+    echo "❌ CamillaDSP binary not found in downloaded archive"
+    exit 1
+fi
+
+# Cleanup
+rm -f /tmp/camilladsp.tar.gz
+cd - >/dev/null
+
+else
+    echo "✓ Skipping CamillaDSP download - already have correct version"
+fi
+
+if [ -f "camilladsp.yml" ]; then
+    sudo mkdir -p /usr/local/etc
+    sudo cp camilladsp.yml /usr/local/etc/
+    echo "✓ CamillaDSP configuration installed"
+else
+    echo "❌ CamillaDSP configuration not found"
+    exit 1
+fi
+
+# Stop and disable any old audio routing services
+echo "Stopping old audio routing services..."
+sudo systemctl stop usb-audio-routing.service 2>/dev/null || true
+sudo systemctl disable usb-audio-routing.service 2>/dev/null || true
+
+# Kill any running alsaloop processes
+echo "Stopping any running alsaloop processes..."
+sudo pkill -f alsaloop 2>/dev/null || true
+sleep 2
+
+# Remove old service file if it exists
+sudo rm -f /etc/systemd/system/usb-audio-routing.service 2>/dev/null || true
+
+# Create log directory for CamillaDSP
+sudo mkdir -p /var/log/camilladsp
+sudo chown pi:pi /var/log/camilladsp
+
+# Create CamillaDSP systemd service
+echo "Creating CamillaDSP systemd service..."
+sudo tee /etc/systemd/system/camilladsp.service > /dev/null << 'EOF'
 [Unit]
-Description=USB to Audio Hardware Routing
-After=usb-gadget-audio.service sound.target
+Description=CamillaDSP Audio Processor for USB Audio Device
+Documentation=https://github.com/HEnquist/camilladsp
+After=network.target sound.target usb-gadget-audio.service
+Wants=sound.target
 Requires=usb-gadget-audio.service
-StartLimitIntervalSec=60
-StartLimitBurst=3
 
 [Service]
 Type=simple
-ExecStartPre=/bin/sleep 10
-ExecStartPre=-/usr/bin/pkill -f alsaloop
-ExecStart=/usr/bin/alsaloop -C plughw:2,0 -P plughw:CARD=sndrpimerusamp,DEV=0 -t 50000 -r 48000
-Restart=on-failure
-RestartSec=15
-User=root
+User=pi
+Group=audio
+ExecStartPre=/bin/sleep 5
+ExecStart=/usr/local/bin/camilladsp -p 1234 /usr/local/etc/camilladsp.yml
+WorkingDirectory=/usr/local/etc
+Restart=always
+RestartSec=10
 StandardOutput=journal
 StandardError=journal
+
+# Environment for ALSA access
+Environment="HOME=/home/pi"
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
+Environment="ALSA_CONF_PATH=/usr/share/alsa/alsa.conf"
+
+# Security settings (relaxed for Pi compatibility and ALSA access)
+NoNewPrivileges=yes
+ProtectSystem=no
+ProtectHome=no
+PrivateTmp=no
+PrivateDevices=no
+
+# Resource limits optimized for Pi Zero
+MemoryMax=64M
+CPUQuota=50%
+
+# Audio device access
+SupplementaryGroups=audio
 
 [Install]
 WantedBy=multi-user.target
@@ -180,10 +342,10 @@ else
     exit 1
 fi
 
-if sudo systemctl enable usb-audio-routing.service; then
-    echo "✓ Audio routing service enabled for boot"
+if sudo systemctl enable camilladsp.service; then
+    echo "✓ CamillaDSP service enabled for boot"
 else
-    echo "❌ Failed to enable audio routing service"
+    echo "❌ Failed to enable CamillaDSP service"
     exit 1
 fi
 
@@ -197,12 +359,12 @@ if sudo systemctl start usb-gadget-audio.service; then
     if systemctl is-active --quiet usb-gadget-audio.service; then
         echo "✓ USB gadget service is running"
         
-        # Start audio routing service
-        echo "Starting audio routing service..."
-        if sudo systemctl start usb-audio-routing.service; then
-            echo "✓ Audio routing service started"
+        # Start CamillaDSP service
+        echo "Starting CamillaDSP service..."
+        if sudo systemctl start camilladsp.service; then
+            echo "✓ CamillaDSP service started"
         else
-            echo "⚠️  Audio routing service failed to start (will retry after reboot)"
+            echo "⚠️  CamillaDSP service failed to start (will retry after reboot)"
         fi
     else
         echo "⚠️  USB gadget service enabled but not running (may need reboot for dwc2 overlay)"
@@ -217,7 +379,7 @@ echo
 echo "Service status:"
 systemctl status usb-gadget-audio.service --no-pager -l || true
 echo
-systemctl status usb-audio-routing.service --no-pager -l || true
+systemctl status camilladsp.service --no-pager -l || true
 
 echo
 echo "=== Installation Complete ==="
@@ -226,15 +388,22 @@ echo "IMPORTANT:"
 echo "1. Reboot your Pi: sudo reboot"
 echo "2. After reboot, check services:"
 echo "   • systemctl status usb-gadget-audio.service"
-echo "   • systemctl status usb-audio-routing.service" 
+echo "   • systemctl status camilladsp.service" 
 echo "3. Use the DATA USB port (center micro USB), NOT the power port"
 echo "4. Connect to host and check with: lsusb"
 echo "5. Check audio devices with: aplay -l"
-echo "6. Debug issues with: ./debug.sh"
+echo "6. Debug issues with: ./debug.sh or ./debug-camilladsp.sh"
 echo
-echo "AUDIO ROUTING:"
-echo "• USB audio from host will automatically route to your audio output"
-echo "• No additional configuration needed - routing starts automatically"
+echo "AUDIO PROCESSING:"
+echo "• USB audio from host routes through CamillaDSP to your audio output"
+echo "• CamillaDSP v3.0.1 automatically downloaded and installed"
+echo "• CamillaDSP provides audio processing capabilities (EQ, crossover, etc.)"
+echo "• CamillaDSP API available at: http://[pi-ip]:1234"
+echo "• Configuration file: /usr/local/etc/camilladsp.yml"
+echo "• Configuration reload: ./reload-config.sh (SIGHUP method)"
+echo "• Auto-reload watcher: ./watch-config.sh (optional)"
+echo "• Old alsaloop routing has been replaced with CamillaDSP processing"
+echo "• Bass shelf filter: +6dB boost at 120Hz and below (validated configuration)"
 echo "• Test from host: play audio to 'Pi Zero USB Audio' device"
 echo
 echo "To uninstall, run: ./cleanup.sh"

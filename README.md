@@ -1,39 +1,46 @@
-# Raspberry Pi Zero USB Audio Device
+# Raspberry Pi Zero USB Audio Device with CamillaDSP
 
-Transform your Raspberry Pi Zero W into a professional USB audio device with automatic routing to external amplifiers and DACs.
+Transform your Raspberry Pi Zero W into a professional USB audio device with integrated digital signal processing and automatic routing to external amplifiers and DACs.
 
 ## 🎵 What This Project Does
 
-This project configures a Raspberry Pi Zero W as a **USB Audio Class 2 (UAC2) device** that appears to any host computer as a standard USB audio interface. Audio received via USB is automatically routed to connected audio hardware like DACs, amplifiers, or HATs.
+This project configures a Raspberry Pi Zero W as a **USB Audio Class 2 (UAC2) device** that appears to any host computer as a standard USB audio interface. Audio received via USB is processed through **CamillaDSP** for advanced signal processing, then routed to connected audio hardware like DACs, amplifiers, or HATs.
 
 ### Key Features
 
 - ✅ **USB Audio Class 2 compliance** - Works with any modern operating system
-- ✅ **Automatic audio routing** - USB input → Physical audio output  
-- ✅ **Professional audio quality** - 48kHz, stereo audio support
+- ✅ **CamillaDSP integration** - Advanced audio processing (EQ, crossover, room correction)
+- ✅ **Real-time audio processing** - USB input → CamillaDSP → Physical audio output  
+- ✅ **Professional audio quality** - 48kHz, stereo audio support with DSP capabilities
+- ✅ **Web-based configuration** - Remote control via CamillaDSP API (port 1234)
 - ✅ **Zero-configuration** - Plug-and-play operation after setup
 - ✅ **Survives reboots** - Automatic startup via systemd services
 - ✅ **Supports various audio hardware** - HATs, USB DACs, I2S devices
 
 ## 🔧 Use Cases
 
-- **USB to I2S converter** - Drive I2S DACs and amplifiers
+- **USB to I2S converter with DSP** - Drive I2S DACs and amplifiers with audio processing
+- **Active crossover system** - Multi-way speaker systems with digital crossovers
+- **Room correction system** - Apply equalization and room corrections
 - **Wireless audio bridge** - Add USB audio to devices without built-in support  
-- **Audio development platform** - Test and prototype audio applications
-- **Headless audio system** - Remote audio output via USB connection
-- **Audio streaming endpoint** - Convert any USB-capable device to audio output
+- **Audio development platform** - Test and prototype audio applications with DSP
+- **Headless audio system** - Remote audio output with web-based control
+- **Audio streaming endpoint** - Convert any USB-capable device to processed audio output
 
 ## 🏗️ Architecture
 
 ```
-[Host Computer] ──USB──► [Pi Zero UAC2 Gadget] ──ALSA──► [Audio Hardware] ──► [Speakers]
+[Host Computer] ──USB──► [Pi Zero UAC2 Gadget] ──► [CamillaDSP] ──► [Audio Hardware] ──► [Speakers]
+                                                       │
+                                               [Web API :1234]
 ```
 
 The system creates:
 1. **USB Composite Gadget** using Linux USB gadget framework
 2. **UAC2 Audio Function** providing standard USB audio interface  
-3. **ALSA Audio Routing** using `alsaloop` for real-time audio forwarding
-4. **Systemd Services** ensuring automatic startup and reliability
+3. **CamillaDSP Processing** for real-time audio processing and routing
+4. **Web API Interface** for remote configuration and control
+5. **Systemd Services** ensuring automatic startup and reliability
 
 ## 🎯 Tested Hardware
 
@@ -79,6 +86,25 @@ The system creates:
    sudo reboot
    ```
 
+   The installation script will automatically:
+   - Download the latest CamillaDSP binary (v3.0.1) from GitHub
+   - Skip download if correct version is already installed
+   - Configure USB Audio Class 2 gadget
+   - Set up systemd services for automatic startup
+   - Install CamillaDSP configuration optimized for USB → Merus amp
+
+   **Advanced options:**
+   ```bash
+   # Override CamillaDSP version
+   CAMILLADSP_VERSION=v3.0.0 ./install.sh
+   
+   # Force re-download even if correct version exists
+   ./install.sh --force-download
+   
+   # Show all available options
+   ./install.sh --help
+   ```
+
 3. **Connect via USB data port:**
    - Use the **center micro USB port** on Pi Zero (NOT the power port)
    - Connect to your host computer
@@ -98,9 +124,40 @@ The system creates:
 
 1. **On host computer:** Select "Pi Zero USB Audio" as audio output device
 2. **Play audio** from any application  
-3. **Hear output** through Pi's connected audio hardware
+3. **Hear processed output** through Pi's connected audio hardware
 
-That's it! No additional configuration required.
+### Advanced Usage
+
+1. **Configure DSP:** Access CamillaDSP web interface at `http://[pi-ip]:1234`
+2. **Modify processing:** Edit `/usr/local/etc/camilladsp.yml` for custom audio processing
+3. **Monitor system:** Use debug scripts `./debug-camilladsp.sh` for troubleshooting
+
+That's it! Audio processing starts automatically.
+
+## 🎛️ CamillaDSP Configuration
+
+The default configuration provides simple passthrough processing. You can customize it for advanced audio processing:
+
+### Example DSP Features
+- **Equalization:** Adjust frequency response
+- **Crossover:** Multi-way speaker systems  
+- **Room correction:** FIR/IIR filters for acoustic correction
+- **Dynamic range:** Compression and limiting
+- **Delay compensation:** Time alignment
+
+### Configuration Files
+- **Main config:** `/usr/local/etc/camilladsp.yml`
+- **Web interface:** `http://[pi-ip]:1234` (when running)
+- **Service logs:** `sudo journalctl -u camilladsp -f`
+
+### Configuration Management
+- **Validate config:** `/usr/local/bin/camilladsp -c /usr/local/etc/camilladsp.yml`
+- **Reload config:** `./reload-config.sh` (SIGHUP signal method)
+- **Auto-reload:** `./watch-config.sh` (monitors file changes)
+- **Manual methods:** Service restart or websocket API
+
+### Customization
+Edit the configuration file to add filters, adjust gain, or implement crossovers. CamillaDSP supports extensive audio processing capabilities. After editing, use `./reload-config.sh` to apply changes without restarting the service. See the [CamillaDSP documentation](https://github.com/HEnquist/camilladsp) for detailed configuration options.
 
 ## 📖 Documentation
 
@@ -112,10 +169,11 @@ That's it! No additional configuration required.
 
 ## ⚡ Performance
 
-- **Audio Latency:** ~10-50ms (depends on buffer configuration)
-- **CPU Usage:** <5% on Pi Zero W during playback
-- **Power Consumption:** +~50mA when active (USB bus powered)
-- **Audio Quality:** 16-bit/48kHz stereo (transparent to source)
+- **Audio Latency:** ~20-100ms (depends on CamillaDSP buffer configuration)
+- **CPU Usage:** <15% on Pi Zero W during playback with DSP processing
+- **Power Consumption:** +~100mA when active (USB bus powered)
+- **Audio Quality:** 16-bit/48kHz stereo input, 32-bit processing, configurable output
+- **DSP Capabilities:** Real-time EQ, crossover, convolution, and more
 
 ## 🛠️ Technical Details
 
@@ -127,12 +185,12 @@ That's it! No additional configuration required.
 
 ### Audio Pipeline  
 - **Capture:** USB UAC2 gadget receives audio from host
-- **Processing:** Real-time routing via ALSA `alsaloop`
+- **Processing:** Real-time processing via CamillaDSP (EQ, crossover, etc.)
 - **Output:** Configurable audio hardware (I2S, USB, analog)
 
 ### System Services
 - **`usb-gadget-audio.service`** - Configures USB audio gadget
-- **`usb-audio-routing.service`** - Manages audio routing
+- **`camilladsp.service`** - Manages CamillaDSP audio processing and routing
 
 ## 🤝 Contributing
 
@@ -163,6 +221,7 @@ This ensures that any modifications or derivatives of this project must also be 
 - **Issues:** [GitHub Issues](https://github.com/yourusername/raspberry-pi-zero-as-usb-audio-device/issues)
 - **Discussions:** [GitHub Discussions](https://github.com/yourusername/raspberry-pi-zero-as-usb-audio-device/discussions)
 - **Wiki:** [Project Wiki](https://github.com/yourusername/raspberry-pi-zero-as-usb-audio-device/wiki)
+- **CamillaDSP Documentation:** [CamillaDSP Project](https://github.com/HEnquist/camilladsp)
 
 ---
 
