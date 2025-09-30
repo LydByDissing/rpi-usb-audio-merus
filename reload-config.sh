@@ -35,6 +35,52 @@ copy_config_if_needed() {
     return 0
 }
 
+# Enhanced verification function
+verify_config_applied() {
+    echo "🔍 Verifying configuration was applied..."
+    
+    # Method 1: Check API if available
+    if command -v curl >/dev/null 2>&1; then
+        API_CONFIG=$(curl -s --connect-timeout 2 http://localhost:1234/api/v1/config 2>/dev/null)
+        if [ $? -eq 0 ] && [ -n "$API_CONFIG" ]; then
+            # Check if our filter is in the active config
+            if echo "$API_CONFIG" | grep -q "bass_shelf_120hz"; then
+                echo "✓ Filter 'bass_shelf_120hz' confirmed in active configuration via API"
+                
+                # Try to extract gain value
+                GAIN_VALUE=$(echo "$API_CONFIG" | grep -A 3 "bass_shelf_120hz" | grep -o '"gain":[^,]*' | cut -d: -f2 | tr -d ' ' 2>/dev/null)
+                if [ -n "$GAIN_VALUE" ]; then
+                    echo "✓ Filter gain setting: ${GAIN_VALUE}dB"
+                fi
+                return 0
+            else
+                echo "⚠️  Filter 'bass_shelf_120hz' not found in active API configuration"
+                return 1
+            fi
+        fi
+    fi
+    
+    # Method 2: Check file modification time vs process start time
+    CONFIG_MTIME=$(stat -c %Y /usr/local/etc/camilladsp.yml 2>/dev/null || echo "0")
+    PROCESS_START=$(ps -o lstart= -p $(pgrep -f "/usr/local/bin/camilladsp") 2>/dev/null | head -1)
+    
+    if [ -n "$PROCESS_START" ]; then
+        echo "ℹ️  Process started: $PROCESS_START"
+        echo "ℹ️  Config modified: $(date -d @$CONFIG_MTIME 2>/dev/null || echo 'unknown')"
+    fi
+    
+    # Method 3: Check recent logs for reload activity
+    RELOAD_LOGS=$(journalctl -u camilladsp.service --since "1 minute ago" --no-pager -q 2>/dev/null)
+    if echo "$RELOAD_LOGS" | grep -q -i "reload\|configuration\|config"; then
+        echo "✓ Recent reload activity detected in logs"
+        return 0
+    else
+        echo "ℹ️  No explicit reload confirmation available"
+        echo "   Try testing audio to confirm filter is working"
+        return 2  # Uncertain but not failed
+    fi
+}
+
 # Always copy config first before any operations
 echo "🔍 Preparing configuration..."
 copy_config_if_needed
@@ -292,6 +338,18 @@ else
 fi
 
 RELOAD_RESULT=$?
+
+# Final status message
+echo
+if [ $RELOAD_RESULT -eq 0 ]; then
+    echo "🎉 Configuration reload completed successfully!"
+    echo "   Your audio processing changes are now active."
+    echo "   Test with audio playback to verify the new settings."
+else
+    echo "❌ Configuration reload failed (exit code: $RELOAD_RESULT)"
+    echo "   Check the error messages above for troubleshooting."
+    echo "   You can also try: sudo systemctl restart camilladsp"
+fi
 
 echo
 if [ $RELOAD_RESULT -eq 0 ]; then

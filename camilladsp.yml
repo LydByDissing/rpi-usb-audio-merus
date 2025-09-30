@@ -66,10 +66,12 @@ pipeline:
   - type: Filter
     channels: [0]
     names:
+      - lower_gain_to_allow_bass_boost
       - bass_shelf_120hz
   - type: Filter
     channels: [1]
     names:
+      - lower_gain_to_allow_bass_boost
       - bass_shelf_120hz
   - type: Mixer
     name: main
