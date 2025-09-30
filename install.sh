@@ -1,8 +1,39 @@
 #!/bin/bash
 # Raspberry Pi Zero USB Audio Device Installation Script
 # 
-# This script configures a Raspberry Pi Zero W as a USB Audio Class 2 device
-# with automatic routing to connected audio hardware.
+# PURPOSE:
+#   Configures a Raspberry Pi Zero W as a USB Audio Class 2 device with 
+#   CamillaDSP for professional audio processing. Transforms the Pi into
+#   a USB audio interface that processes audio and routes it to connected
+#   audio hardware (DACs, amplifiers, HATs).
+#
+# USAGE:
+#   sudo ./install.sh [options]
+#
+# OPTIONS:
+#   --force-download    Force re-download of CamillaDSP binary
+#   --help, -h          Show help and usage information
+#
+# ENVIRONMENT VARIABLES:
+#   CAMILLADSP_VERSION  Override CamillaDSP version (default: v3.0.1)
+#
+# EXAMPLES:
+#   ./install.sh                                    # Standard installation
+#   ./install.sh --force-download                   # Force binary re-download
+#   CAMILLADSP_VERSION=v3.0.0 ./install.sh         # Install specific version
+#
+# WHAT IT DOES:
+#   1. Downloads and installs CamillaDSP binary
+#   2. Creates working configuration from template
+#   3. Sets up USB Audio Class 2 gadget
+#   4. Configures systemd services for automatic startup
+#   5. Installs management and debugging scripts
+#
+# REQUIREMENTS:
+#   - Raspberry Pi Zero W with Raspberry Pi OS
+#   - Root privileges (sudo)
+#   - Internet connection for downloading CamillaDSP
+#   - Audio hardware connected (I2S HAT, USB DAC, etc.)
 #
 # Copyright (C) 2024 Raspberry Pi Zero USB Audio Device Project Contributors
 # Licensed under GPL v3 - see LICENSE file for details

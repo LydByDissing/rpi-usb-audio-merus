@@ -1,5 +1,34 @@
 #!/bin/bash
-# Manual CamillaDSP audio processing script for testing
+# Manual CamillaDSP Audio Processing Script
+#
+# PURPOSE:
+#   Starts CamillaDSP manually in foreground mode for testing and debugging.
+#   Useful for testing configurations, troubleshooting issues, or running
+#   CamillaDSP outside of the systemd service.
+#
+# USAGE:
+#   ./start-routing.sh
+#
+# WHAT IT DOES:
+#   1. Stops any existing CamillaDSP processes
+#   2. Validates configuration files exist
+#   3. Starts CamillaDSP in foreground with API enabled
+#   4. Shows real-time output and logs
+#
+# USE WHEN:
+#   - Testing new configurations before applying to service
+#   - Debugging CamillaDSP startup issues
+#   - Need to see real-time CamillaDSP output
+#   - Service won't start and need manual troubleshooting
+#
+# NOTE:
+#   Press Ctrl+C to stop. For production use, use systemd service instead:
+#   sudo systemctl start camilladsp
+#
+# REQUIREMENTS:
+#   - CamillaDSP binary installed (/usr/local/bin/camilladsp)
+#   - Configuration file (./camilladsp.yml)
+#   - Audio hardware available
 #
 # Copyright (C) 2024 Raspberry Pi Zero USB Audio Device Project Contributors
 # Licensed under GPL v3 - see LICENSE file for details

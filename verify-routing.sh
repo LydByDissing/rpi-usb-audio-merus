@@ -1,8 +1,37 @@
 #!/bin/bash
 # CamillaDSP Audio Routing Verification Script
-# 
-# This script verifies that audio is actually routing through CamillaDSP
-# and that the expected configuration is being used
+#
+# PURPOSE:
+#   Comprehensive verification that audio is properly routing through CamillaDSP
+#   and that configuration changes are actually being applied. Diagnoses routing
+#   issues and verifies the complete audio pipeline.
+#
+# USAGE:
+#   ./verify-routing.sh
+#
+# WHAT IT VERIFIES:
+#   1. CamillaDSP service status and process health
+#   2. Configuration file synchronization (local vs system)
+#   3. Active configuration via CamillaDSP API
+#   4. Audio device routing (USB gadget → CamillaDSP → output)
+#   5. Filter configuration and settings
+#   6. Conflicting processes that might bypass CamillaDSP
+#   7. Recent logs and error conditions
+#
+# OUTPUT:
+#   Step-by-step verification with:
+#   - ✓ Success indicators for working components
+#   - ❌ Error indicators for issues requiring attention
+#   - ⚠️  Warnings for potential problems
+#   - Detailed troubleshooting recommendations
+#   - Summary with actionable next steps
+#
+# USE WHEN:
+#   - Audio filters/processing not working as expected
+#   - Configuration changes don't seem to take effect
+#   - Need to verify complete audio routing pipeline
+#   - Troubleshooting why audio processing isn't working
+#   - After making configuration changes to verify they're active
 #
 # Copyright (C) 2024 Raspberry Pi Zero USB Audio Device Project Contributors
 # Licensed under GPL v3 - see LICENSE file for details

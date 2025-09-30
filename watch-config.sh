@@ -1,8 +1,39 @@
 #!/bin/bash
 # CamillaDSP Configuration File Watcher
-# 
-# Automatically reloads CamillaDSP when configuration file changes
-# Uses inotify to monitor file changes
+#
+# PURPOSE:
+#   Automatically monitors the CamillaDSP configuration file for changes
+#   and reloads the configuration immediately when modifications are detected.
+#   Perfect for development and testing of audio processing settings.
+#
+# USAGE:
+#   ./watch-config.sh
+#
+# WHAT IT DOES:
+#   1. Monitors ./camilladsp.yml for file modifications
+#   2. Automatically triggers configuration reload when changes detected
+#   3. Uses the reload script's SIGHUP method for fast reloading
+#   4. Continues monitoring until manually stopped
+#   5. Shows real-time feedback on configuration changes and reload status
+#
+# USE WHEN:
+#   - Developing and testing audio processing configurations
+#   - Making frequent changes to filters, EQ, or crossover settings
+#   - Want immediate feedback on configuration changes
+#   - Iterating on audio processing parameters
+#
+# WORKFLOW:
+#   1. Start the watcher: ./watch-config.sh
+#   2. Edit camilladsp.yml in another terminal/editor
+#   3. Save changes - watcher automatically reloads configuration
+#   4. Test audio to hear changes immediately
+#   5. Continue editing - each save triggers automatic reload
+#   6. Press Ctrl+C to stop watching
+#
+# REQUIREMENTS:
+#   - inotifywait command available (inotify-tools package)
+#   - CamillaDSP service running
+#   - Working configuration file (./camilladsp.yml)
 #
 # Copyright (C) 2024 Raspberry Pi Zero USB Audio Device Project Contributors
 # Licensed under GPL v3 - see LICENSE file for details

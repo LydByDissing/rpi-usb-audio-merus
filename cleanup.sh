@@ -1,5 +1,28 @@
 #!/bin/bash
-# Cleanup script - removes all USB audio gadget configuration
+# USB Audio Device Cleanup Script
+#
+# PURPOSE:
+#   Completely removes the USB audio device setup and returns the system
+#   to its original state. Stops services, removes configuration files,
+#   cleans up USB gadget settings, and uninstalls CamillaDSP.
+#
+# USAGE:
+#   sudo ./cleanup.sh
+#
+# WHAT IT DOES:
+#   1. Stops and disables systemd services (camilladsp, usb-gadget-audio)
+#   2. Removes CamillaDSP binary and configuration files
+#   3. Cleans up USB gadget configuration
+#   4. Removes service files and scripts
+#   5. Restores system to pre-installation state
+#
+# WARNING:
+#   This will permanently remove all configuration and cannot be undone.
+#   Make sure to backup any custom configurations before running.
+#
+# REQUIREMENTS:
+#   - Root privileges (sudo)
+#   - Run from the project directory
 #
 # Copyright (C) 2024 Raspberry Pi Zero USB Audio Device Project Contributors
 # Licensed under GPL v3 - see LICENSE file for details
