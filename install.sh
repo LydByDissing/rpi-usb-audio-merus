@@ -263,9 +263,11 @@ fi
 if [ -f "camilladsp.yml" ]; then
     sudo mkdir -p /usr/local/etc
     sudo cp camilladsp.yml /usr/local/etc/
-    echo "✓ CamillaDSP configuration installed"
+    echo "✓ Example CamillaDSP configuration installed"
+    echo "  Edit /usr/local/etc/camilladsp.yml to customize audio processing"
 else
-    echo "❌ CamillaDSP configuration not found"
+    echo "❌ CamillaDSP configuration file not found in current directory"
+    echo "  Make sure camilladsp.yml exists in $(pwd)"
     exit 1
 fi
 
@@ -392,18 +394,20 @@ echo "   • systemctl status camilladsp.service"
 echo "3. Use the DATA USB port (center micro USB), NOT the power port"
 echo "4. Connect to host and check with: lsusb"
 echo "5. Check audio devices with: aplay -l"
-echo "6. Debug issues with: ./debug.sh or ./debug-camilladsp.sh"
+echo "6. Debug issues with: ./debug-camilladsp.sh or ./verify-routing.sh"
 echo
 echo "AUDIO PROCESSING:"
 echo "• USB audio from host routes through CamillaDSP to your audio output"
-echo "• CamillaDSP v3.0.1 automatically downloaded and installed"
-echo "• CamillaDSP provides audio processing capabilities (EQ, crossover, etc.)"
-echo "• CamillaDSP API available at: http://[pi-ip]:1234"
-echo "• Configuration file: /usr/local/etc/camilladsp.yml"
-echo "• Configuration reload: ./reload-config.sh (defaults to SIGHUP)"
-echo "• Auto-reload watcher: ./watch-config.sh (optional)"
-echo "• Professional audio processing via CamillaDSP (replaces simple routing)"
-echo "• Bass shelf filter: -24dB cut at 1000Hz and below (validated configuration)"
+echo "• CamillaDSP automatically downloaded and installed (latest stable version)"
+echo "• CamillaDSP provides professional audio processing (EQ, crossover, room correction, etc.)"
+echo "• Web-based configuration: http://[pi-ip]:1234 (when connected to network)"
+echo "• Configuration file: /usr/local/etc/camilladsp.yml (edit for custom processing)"
+echo "• Live config reload: ./reload-config.sh (no service restart needed)"
+echo "• Development helper: ./watch-config.sh (auto-reload on file changes)"
+echo "• Professional audio pipeline with 32-bit internal processing"
+echo "• Example configuration included - customize for your needs"
 echo "• Test from host: play audio to 'Pi Zero USB Audio' device"
 echo
 echo "To uninstall, run: ./cleanup.sh"
+echo "To customize audio processing, edit: /usr/local/etc/camilladsp.yml"
+echo "For help with configuration: https://github.com/HEnquist/camilladsp"

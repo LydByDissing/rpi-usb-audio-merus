@@ -1,8 +1,14 @@
-# CamillaDSP Configuration for USB Audio Gadget → Merus Amplifier
+# CamillaDSP Configuration for USB Audio Gadget → Audio Output
 # Raspberry Pi Zero USB Audio Device with DSP Processing
 #
-# Configuration validated against CamillaDSP v3.0.1 syntax
+# This is an EXAMPLE configuration - customize for your specific needs!
+# Configuration validated against CamillaDSP v3.0.1+ syntax
 # Based on official examples from https://github.com/HEnquist/camilladsp-config
+#
+# To customize:
+# 1. Edit this file for your specific audio processing needs
+# 2. Reload configuration: ./reload-config.sh
+# 3. For help: https://github.com/HEnquist/camilladsp
 
 devices:
   samplerate: 48000
@@ -22,10 +28,10 @@ devices:
   playback:
     type: Alsa
     channels: 2
-    device: "hw:CARD=sndrpimerusamp,DEV=0"
+    device: "hw:CARD=sndrpimerusamp,DEV=0"  # Change this to match your audio hardware
     format: S32LE
 
-# Bass shelf filter for low-end enhancement
+# Example filter: Bass shelf (customize frequency, gain, and Q for your needs)
 filters:
   bass_shelf_120hz:
     type: Biquad
@@ -51,10 +57,14 @@ mixers:
           - channel: 1
             gain: 0.0
 
-# Processing pipeline: Filter → Mix
+# Processing pipeline: Filter → Mix (process each channel separately)
 pipeline:
   - type: Filter
-    channels: [0,1]
+    channels: [0]
+    names:
+      - bass_shelf_120hz
+  - type: Filter
+    channels: [1]
     names:
       - bass_shelf_120hz
   - type: Mixer
