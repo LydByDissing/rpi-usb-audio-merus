@@ -36,13 +36,13 @@ filters:
   lower_gain_to_allow_bass_boost:
     type: Gain
     parameters:
-      gain: -24.0
+      gain: -12.0
   bass_shelf_120hz:
     type: Biquad
     parameters:
       type: Lowshelf
       freq: 150
-      gain: 12.0
+      gain: 18.0
       q: 0.7
 
 # Mixer routing both channels
