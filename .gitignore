@@ -2,6 +2,9 @@
 camilladsp
 camilladsp_*
 
+# User configuration (working copy - template is in git)
+camilladsp.yml
+
 # Temporary files
 *.tmp
 *.temp
