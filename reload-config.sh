@@ -46,6 +46,7 @@ reload_with_sighup() {
     
     if [ -z "$CAMILLADSP_PID" ]; then
         echo "❌ Could not find CamillaDSP process"
+        echo "   Service might not be running. Try: sudo systemctl start camilladsp"
         return 1
     fi
     
@@ -54,8 +55,34 @@ reload_with_sighup() {
     
     if [ $? -eq 0 ]; then
         echo "✓ SIGHUP signal sent successfully"
-        echo "   Configuration should reload automatically"
-        return 0
+        
+        # Give CamillaDSP a moment to reload
+        echo "   Waiting for configuration reload..."
+        sleep 2
+        
+        # Verify the process is still running after reload
+        if pgrep -f "/usr/local/bin/camilladsp" >/dev/null; then
+            echo "✓ CamillaDSP process is still running after reload"
+            
+            # Check if the service shows any recent restart activity
+            RECENT_LOGS=$(journalctl -u camilladsp.service --since "30 seconds ago" --no-pager -q)
+            if echo "$RECENT_LOGS" | grep -q "reload\|config"; then
+                echo "✓ Configuration reload confirmed in logs"
+            else
+                echo "ℹ️  No reload confirmation in logs (this may be normal)"
+            fi
+            
+            # Wait a moment for config to fully apply
+            sleep 1
+            
+            # Additional verification
+            verify_config_applied
+            return 0
+        else
+            echo "❌ CamillaDSP process died after SIGHUP - config might have errors"
+            echo "   Check logs: sudo journalctl -u camilladsp -n 10"
+            return 1
+        fi
     else
         echo "❌ Failed to send SIGHUP signal"
         return 1
@@ -125,6 +152,9 @@ for arg in "$@"; do
         --websocket)
             METHOD="websocket"
             ;;
+        --interactive|-i)
+            METHOD="interactive"
+            ;;
         --no-validate)
             VALIDATE_FIRST=false
             ;;
@@ -135,15 +165,17 @@ for arg in "$@"; do
             echo "  --sighup      Use SIGHUP signal (recommended, fastest)"
             echo "  --restart     Restart systemd service (more disruptive)"
             echo "  --websocket   Show websocket API information"
+            echo "  --interactive, -i  Interactive mode with menu selection"
             echo
             echo "Options:"
             echo "  --no-validate Skip configuration validation before reload"
             echo "  --help, -h    Show this help message"
             echo
             echo "Examples:"
-            echo "  $0                    # Interactive mode"
-            echo "  $0 --sighup           # Use SIGHUP method"
-            echo "  $0 --restart          # Use service restart"
+            echo "  $0                    # Default: SIGHUP reload"
+            echo "  $0 --sighup           # Explicit SIGHUP method"
+            echo "  $0 --interactive      # Interactive menu"
+            echo "  $0 --restart          # Service restart"
             echo "  $0 --sighup --no-validate  # Skip validation"
             exit 0
             ;;
@@ -186,40 +218,46 @@ if [ -n "$METHOD" ]; then
         websocket)
             reload_with_websocket
             ;;
+        interactive)
+            # Interactive mode
+            echo "Select reload method:"
+            echo "1) SIGHUP signal (recommended)"
+            echo "2) Service restart"  
+            echo "3) Websocket API info"
+            echo "q) Quit"
+            echo
+            read -p "Choose option (1-3, q): " choice
+            
+            case "$choice" in
+                1)
+                    reload_with_sighup
+                    ;;
+                2)
+                    reload_with_restart
+                    ;;
+                3)
+                    reload_with_websocket
+                    ;;
+                q|Q)
+                    echo "Cancelled"
+                    exit 0
+                    ;;
+                *)
+                    echo "❌ Invalid choice"
+                    exit 1
+                    ;;
+            esac
+            ;;
         *)
             echo "❌ Unknown method: $METHOD"
             exit 1
             ;;
     esac
 else
-    # Interactive mode
-    echo "Select reload method:"
-    echo "1) SIGHUP signal (recommended)"
-    echo "2) Service restart"  
-    echo "3) Websocket API info"
-    echo "q) Quit"
+    # Default mode: Use SIGHUP (fastest and most reliable)
+    echo "Using default method: SIGHUP signal reload"
     echo
-    read -p "Choose option (1-3, q): " choice
-    
-    case "$choice" in
-        1)
-            reload_with_sighup
-            ;;
-        2)
-            reload_with_restart
-            ;;
-        3)
-            reload_with_websocket
-            ;;
-        q|Q)
-            echo "Cancelled"
-            exit 0
-            ;;
-        *)
-            echo "❌ Invalid choice"
-            exit 1
-            ;;
-    esac
+    reload_with_sighup
 fi
 
 RELOAD_RESULT=$?

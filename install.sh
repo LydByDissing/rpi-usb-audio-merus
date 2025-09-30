@@ -274,10 +274,10 @@ echo "Stopping old audio routing services..."
 sudo systemctl stop usb-audio-routing.service 2>/dev/null || true
 sudo systemctl disable usb-audio-routing.service 2>/dev/null || true
 
-# Kill any running alsaloop processes
-echo "Stopping any running alsaloop processes..."
+# Clean up any old alsaloop processes (legacy cleanup)
+echo "Cleaning up any legacy alsaloop processes..."
 sudo pkill -f alsaloop 2>/dev/null || true
-sleep 2
+sleep 1
 
 # Remove old service file if it exists
 sudo rm -f /etc/systemd/system/usb-audio-routing.service 2>/dev/null || true
@@ -400,10 +400,10 @@ echo "• CamillaDSP v3.0.1 automatically downloaded and installed"
 echo "• CamillaDSP provides audio processing capabilities (EQ, crossover, etc.)"
 echo "• CamillaDSP API available at: http://[pi-ip]:1234"
 echo "• Configuration file: /usr/local/etc/camilladsp.yml"
-echo "• Configuration reload: ./reload-config.sh (SIGHUP method)"
+echo "• Configuration reload: ./reload-config.sh (defaults to SIGHUP)"
 echo "• Auto-reload watcher: ./watch-config.sh (optional)"
-echo "• Old alsaloop routing has been replaced with CamillaDSP processing"
-echo "• Bass shelf filter: +6dB boost at 120Hz and below (validated configuration)"
+echo "• Professional audio processing via CamillaDSP (replaces simple routing)"
+echo "• Bass shelf filter: -24dB cut at 1000Hz and below (validated configuration)"
 echo "• Test from host: play audio to 'Pi Zero USB Audio' device"
 echo
 echo "To uninstall, run: ./cleanup.sh"

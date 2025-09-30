@@ -31,7 +31,7 @@ filters:
     type: Biquad
     parameters:
       type: Lowshelf
-      freq: 120.0
+      freq: 150
       gain: 12.0
       q: 0.7
 
@@ -54,11 +54,7 @@ mixers:
 # Processing pipeline: Filter → Mix
 pipeline:
   - type: Filter
-    channels: [0]
-    names:
-      - bass_shelf_120hz
-  - type: Filter
-    channels: [1]
+    channels: [0,1]
     names:
       - bass_shelf_120hz
   - type: Mixer

@@ -9,7 +9,6 @@ echo "UAC2_Gadget (card 2) → CamillaDSP → Merus Amp"
 
 # Kill any existing audio processes
 pkill -f camilladsp 2>/dev/null && echo "Stopped existing CamillaDSP"
-pkill -f alsaloop 2>/dev/null && echo "Stopped existing alsaloop"
 sleep 2
 
 # Check if config file exists

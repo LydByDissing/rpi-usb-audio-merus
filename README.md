@@ -152,7 +152,7 @@ The default configuration provides simple passthrough processing. You can custom
 
 ### Configuration Management
 - **Validate config:** `/usr/local/bin/camilladsp -c /usr/local/etc/camilladsp.yml`
-- **Reload config:** `./reload-config.sh` (SIGHUP signal method)
+- **Reload config:** `./reload-config.sh` (defaults to SIGHUP signal method)
 - **Auto-reload:** `./watch-config.sh` (monitors file changes)
 - **Manual methods:** Service restart or websocket API
 

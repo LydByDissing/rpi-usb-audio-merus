@@ -44,11 +44,11 @@ fi
 
 echo
 echo "4. Audio Routing Process:"
-if pgrep alsaloop >/dev/null; then
-    echo "   ✅ alsaloop is running (PID: $(pgrep alsaloop))"
-    ps aux | grep alsaloop | grep -v grep | head -1 | awk '{print "   Command: " $11 " " $12 " " $13 " " $14 " " $15 " " $16 " " $17}'
+if pgrep -f camilladsp >/dev/null; then
+    echo "   ✅ CamillaDSP is running (PID: $(pgrep -f camilladsp))"
+    ps aux | grep camilladsp | grep -v grep | head -1 | awk '{print "   Command: " $11 " " $12 " " $13 " " $14 " " $15 " " $16 " " $17}'
 else
-    echo "   ❌ alsaloop is NOT running"
+    echo "   ❌ CamillaDSP is NOT running"
 fi
 
 echo
@@ -70,7 +70,7 @@ echo
 echo "6. Expected Audio Configuration:"
 echo "   • UAC2_Gadget should be at card 2 (receives from host)"
 echo "   • Audio output hardware should be available for routing"
-echo "   • alsaloop routes: plughw:2,0 → audio hardware"
+echo "   • CamillaDSP processes: plughw:2,0 → audio hardware"
 
 echo
 echo "7. Host Connection Test:"
@@ -103,15 +103,15 @@ if ! systemctl is-active --quiet usb-gadget-audio.service; then
     echo "• USB gadget service not running - try: sudo systemctl start usb-gadget-audio.service"
 fi
 
-if ! systemctl is-active --quiet usb-audio-routing.service; then
-    echo "• Audio routing service not running - try: sudo systemctl start usb-audio-routing.service"
+if ! systemctl is-active --quiet camilladsp.service; then
+    echo "• CamillaDSP service not running - try: sudo systemctl start camilladsp.service"
 fi
 
-if ! pgrep alsaloop >/dev/null; then
-    echo "• Audio routing not active - try: ./start-routing.sh"
+if ! pgrep -f camilladsp >/dev/null; then
+    echo "• CamillaDSP not active - try: ./start-routing.sh"
 fi
 
-echo "• Check service logs: journalctl -u usb-gadget-audio.service -u usb-audio-routing.service"
+echo "• Check service logs: journalctl -u usb-gadget-audio.service -u camilladsp.service"
 echo "• Verify USB connection uses DATA port (center micro USB on Pi Zero)"
 echo "• Check host audio settings for 'Pi Zero USB Audio' device"
 echo "• For issues: see docs/TROUBLESHOOTING.md"

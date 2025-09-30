@@ -48,9 +48,10 @@ echo "Removing system scripts..."
 sudo rm -f /usr/local/bin/usb-gadget-audio.sh
 sudo rm -f /usr/local/bin/usb-audio-routing.sh 2>/dev/null || true
 
-# Kill any running alsaloop processes
-echo "Stopping any running audio routing..."
-sudo pkill alsaloop 2>/dev/null || true
+# Kill any running audio processes
+echo "Stopping any running audio processing..."
+sudo pkill -f camilladsp 2>/dev/null || true
+sudo pkill -f alsaloop 2>/dev/null || true
 
 # Clean up USB gadget configuration
 echo "Cleaning USB gadget configuration..."

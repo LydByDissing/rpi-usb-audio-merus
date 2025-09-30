@@ -61,10 +61,10 @@ echo
 echo "🔍 Checking for conflicting audio processes..."
 ALSALOOP_PROCS=$(pgrep -f alsaloop 2>/dev/null || true)
 if [ -n "$ALSALOOP_PROCS" ]; then
-    echo "⚠️  Warning: alsaloop processes are still running (PIDs: $ALSALOOP_PROCS)"
+    echo "⚠️  Warning: Legacy alsaloop processes detected (PIDs: $ALSALOOP_PROCS)"
     echo "   These may conflict with CamillaDSP. Stop them with: sudo pkill -f alsaloop"
 else
-    echo "✓ No conflicting alsaloop processes found"
+    echo "✓ No conflicting legacy processes found"
 fi
 
 # Check old service
@@ -130,7 +130,7 @@ echo "• API not responding: Check port 1234 is not blocked"
 echo
 echo "Configuration Management:"
 echo "• Validate config: /usr/local/bin/camilladsp -c /usr/local/etc/camilladsp.yml"
-echo "• Reload config: ./reload-config.sh (SIGHUP method)"
+echo "• Reload config: ./reload-config.sh (defaults to SIGHUP method)"
 echo "• Watch for changes: ./watch-config.sh (auto-reload on file changes)"
 echo "• API endpoint: http://localhost:1234 (if enabled)"
 echo
