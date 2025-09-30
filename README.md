@@ -153,9 +153,10 @@ The default configuration provides simple passthrough processing. You can custom
 ### Configuration Management
 
 **Easy Workflow:**
-1. **Edit:** Modify `./camilladsp.yml` in the project directory
-2. **Apply:** Run `./reload-config.sh` to copy changes and reload
-3. **Test:** Audio processing updates immediately
+1. **Install:** Run `./install.sh` (creates `camilladsp.yml` from template)
+2. **Edit:** Modify `./camilladsp.yml` for your audio processing needs
+3. **Apply:** Run `./reload-config.sh` to copy changes and reload
+4. **Test:** Audio processing updates immediately
 
 **Available Tools:**
 - **Live reload:** `./reload-config.sh` (copies local config + SIGHUP reload)
@@ -165,7 +166,8 @@ The default configuration provides simple passthrough processing. You can custom
 - **Manual methods:** Service restart or websocket API
 
 **File Locations:**
-- **Edit here:** `./camilladsp.yml` (local working copy)
+- **Template:** `camilladsp.yml.template` (in git, don't edit directly)
+- **Working config:** `./camilladsp.yml` (created from template, your edits)
 - **Service reads:** `/usr/local/etc/camilladsp.yml` (system location)
 
 ### Customization

@@ -1,0 +1,85 @@
+# CamillaDSP Configuration Template for USB Audio Gadget → Audio Output
+# Raspberry Pi Zero USB Audio Device with DSP Processing
+#
+# This is a TEMPLATE file - do not edit directly!
+# Configuration validated against CamillaDSP v3.0.1+ syntax
+# Based on official examples from https://github.com/HEnquist/camilladsp-config
+#
+# Usage:
+# 1. Install script copies this template to camilladsp.yml (your working config)
+# 2. Edit camilladsp.yml for your specific audio processing needs
+# 3. Reload configuration: ./reload-config.sh
+# 4. For help: https://github.com/HEnquist/camilladsp
+#
+# Template provides basic passthrough with example filters you can customize
+
+devices:
+  samplerate: 48000
+  chunksize: 2048
+  enable_rate_adjust: true
+  silence_threshold: -60
+  silence_timeout: 3.0
+  target_level: 2048
+  adjust_period: 10
+
+  capture:
+    type: Alsa
+    channels: 2
+    device: "plughw:2,0"
+    format: S16LE
+
+  playback:
+    type: Alsa
+    channels: 2
+    device: "hw:CARD=sndrpimerusamp,DEV=0"  # Change this to match your audio hardware
+    format: S32LE
+
+# Example filters: Customize frequency, gain, and Q for your needs
+# These are EXAMPLES - modify or remove based on your requirements
+filters:
+  # Example: Reduce overall gain to prevent clipping when adding bass boost
+  # lower_gain_to_allow_bass_boost:
+  #   type: Gain
+  #   parameters:
+  #     gain: -6.0
+  
+  # Example: Bass shelf filter for low-end enhancement
+  # bass_shelf_120hz:
+  #   type: Biquad
+  #   parameters:
+  #     type: Lowshelf
+  #     freq: 120.0
+  #     gain: 6.0
+  #     q: 0.7
+
+# Mixer routing both channels
+mixers:
+  main:
+    channels:
+      in: 2
+      out: 2
+    mapping:
+      - dest: 0
+        sources:
+          - channel: 0
+            gain: 0.0
+      - dest: 1
+        sources:
+          - channel: 1
+            gain: 0.0
+
+# Processing pipeline: Filter → Mix (process each channel separately)
+pipeline:
+  # Example filter processing (uncomment and modify as needed):
+  # - type: Filter
+  #   channels: [0]
+  #   names:
+  #     - bass_shelf_120hz
+  # - type: Filter
+  #   channels: [1]
+  #   names:
+  #     - bass_shelf_120hz
+  
+  # Final mixer stage (required)
+  - type: Mixer
+    name: main

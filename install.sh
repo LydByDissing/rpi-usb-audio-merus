@@ -260,16 +260,28 @@ else
     echo "✓ Skipping CamillaDSP download - already have correct version"
 fi
 
-if [ -f "camilladsp.yml" ]; then
-    sudo mkdir -p /usr/local/etc
-    sudo cp camilladsp.yml /usr/local/etc/
-    echo "✓ Example CamillaDSP configuration installed"
-    echo "  Edit /usr/local/etc/camilladsp.yml to customize audio processing"
+# Create working config from template if needed
+if [ ! -f "camilladsp.yml" ]; then
+    if [ -f "camilladsp.yml.template" ]; then
+        echo "Creating working configuration from template..."
+        cp camilladsp.yml.template camilladsp.yml
+        echo "✓ Created camilladsp.yml from template"
+        echo "  Edit this file to customize your audio processing"
+    else
+        echo "❌ Neither camilladsp.yml nor camilladsp.yml.template found"
+        echo "  Template file missing from $(pwd)"
+        exit 1
+    fi
 else
-    echo "❌ CamillaDSP configuration file not found in current directory"
-    echo "  Make sure camilladsp.yml exists in $(pwd)"
-    exit 1
+    echo "✓ Found existing camilladsp.yml configuration"
 fi
+
+# Install configuration to system location
+sudo mkdir -p /usr/local/etc
+sudo cp camilladsp.yml /usr/local/etc/
+echo "✓ CamillaDSP configuration installed to /usr/local/etc/"
+echo "  Local working copy: ./camilladsp.yml"
+echo "  System location: /usr/local/etc/camilladsp.yml"
 
 # Stop and disable any old audio routing services
 echo "Stopping old audio routing services..."

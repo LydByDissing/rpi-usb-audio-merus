@@ -30,7 +30,18 @@ copy_config_if_needed() {
             return 1
         fi
     else
-        echo "ℹ️  No local config file found, using existing system config"
+        echo "❌ Local config file not found: $LOCAL_CONFIG_FILE"
+        if [ -f "camilladsp.yml.template" ]; then
+            echo "   Creating working config from template..."
+            cp camilladsp.yml.template "$LOCAL_CONFIG_FILE"
+            echo "✓ Created $LOCAL_CONFIG_FILE from template"
+            echo "   Edit this file and run the reload script again"
+            return 1
+        else
+            echo "   No template file found either"
+            echo "   Make sure you have camilladsp.yml or camilladsp.yml.template"
+            return 1
+        fi
     fi
     return 0
 }
